@@ -1,0 +1,6 @@
+﻿services:
+  iotoperationsdrop.iolink:
+    image: iotoperationsdrop.iolink
+    build:
+      context: .
+      dockerfile: IoTOperationsDrop.IOLink/Dockerfile
