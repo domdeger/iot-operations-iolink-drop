@@ -39,9 +39,9 @@ Passe die Datei `appsettings.json` an, um den **IO-Link Master** und den **MQTT 
     "PublishIntervalSeconds": 60
   }
 }
+```
 
 Konfigurationswerte können durch Umgebungsvariablen nach folgendem Schema überschrieben werden Section__Value. Beispiel: IOLink__MasterIP
-```
 
 ### 3. Docker-Container bauen und starten
 
