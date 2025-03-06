@@ -2,5 +2,17 @@
   iotoperationsdrop.iolink:
     image: iotoperationsdrop.iolink
     build:
-      context: .
+      context: ./
       dockerfile: IoTOperationsDrop.IOLink/Dockerfile
+    networks:
+      - iotoperationsdrop
+
+  mqttbroker:
+    image: eclipse-mosquitto:2.0.21
+    ports:
+      - "1883:1883"
+    networks:
+      - iotoperationsdrop
+
+networks:
+  iotoperationsdrop:

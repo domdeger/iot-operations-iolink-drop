@@ -39,19 +39,20 @@ Passe die Datei `appsettings.json` an, um den **IO-Link Master** und den **MQTT 
     "PublishIntervalSeconds": 60
   }
 }
+
+Konfigurationswerte können durch Umgebungsvariablen nach folgendem Schema überschrieben werden Section__Value. Beispiel: IOLink__MasterIP
 ```
 
 ### 3. Docker-Container bauen und starten
 
 ```sh
-docker build -t iolink-mqtt-client .
-docker run --rm -d --name iolink-mqtt iolink-mqtt-client
+docker compose up --build -d
 ```
 
 ### 4. Logs überprüfen
 
 ```sh
-docker logs -f iolink-mqtt
+docker compose logs -f iotoperationsdrop.iolink
 ```
 
 ## MQTT Topics
