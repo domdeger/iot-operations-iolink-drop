@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,10 +15,14 @@ public class TupleConverterTKeyTValueConverter : JsonConverterFactory
         }
 
         var genericTypeDef = typeToConvert.GetGenericTypeDefinition();
+
+        var enumerableType = typeof(IEnumerable);
+        var isEnumerable = typeToConvert.IsAssignableTo(enumerableType);
+
         var innerType = typeToConvert.GetGenericArguments().FirstOrDefault();
 
         if (
-            genericTypeDef == typeof(IEnumerable<>)
+            isEnumerable
             && innerType?.IsGenericType == true
             && innerType.GetGenericTypeDefinition() == typeof(ValueTuple<,>)
         )
