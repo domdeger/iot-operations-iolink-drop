@@ -60,7 +60,7 @@ Das Programm sendet periodisch die IO-Link Sensordaten an das konfigurierte MQTT
 
 ```
 topic: iolink/pdin
-payload: { ... }
+payload: {"data":{"TI_PD_SV_3_Name":false,"TI_PD_SV_2_Name":false,"TI_PD_VR_1_Name":243},"deviceId":733,"vendorId":310}
 ```
 
 ## Entwicklung
