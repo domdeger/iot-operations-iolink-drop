@@ -1,13 +1,14 @@
 using System.Text.Json;
 using IOLinkNET.Integration;
 using IOLinkNET.Vendors.Ifm;
-using IoTOperationsDrop.IOLink.MQTT;
+using IoTOperationsDrop.IOLink.Models.Settings;
 using IoTOperationsDrop.IOLink.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Protocol;
+using Spectre.Console;
 
 namespace IoTOperationsDrop.IOLink.Services;
 
@@ -17,38 +18,74 @@ public class IoLinkMqttService : BackgroundService
     private readonly MqttClientOptions _options;
     private readonly TimeSpan _publishInterval;
     private readonly IODDPortReader _portReader;
+    private readonly byte _ioLinkPort;
 
     public IoLinkMqttService(IConfiguration configuration, IOptions<MqttSettings> mqttSettings)
     {
+        PrintWelcomeBanner();
+
         var settings = mqttSettings.Value;
         _publishInterval = TimeSpan.FromSeconds(settings.PublishIntervalSeconds);
 
         var mqttFactory = new MqttClientFactory();
         _client = mqttFactory.CreateMqttClient();
 
-        var username = configuration["Mqtt:Username"];
-        var password = configuration["Mqtt:Password"];
+        var brokerHost = configuration["Mqtt:BrokerHost"] ?? Environment.GetEnvironmentVariable("MQTT__BROKERHOST");
+        var brokerPort = Convert.ToInt32(configuration["Mqtt:BrokerPort"] ?? Environment.GetEnvironmentVariable("MQTT__BROKERPORT"));
+        var username = configuration["Mqtt:Username"] ?? Environment.GetEnvironmentVariable("MQTT__USERNAME");
+        var password = configuration["Mqtt:Password"] ?? Environment.GetEnvironmentVariable("MQTT__PASSWORD");
+        var masterIp = configuration["IOLink:MasterIp"] ?? Environment.GetEnvironmentVariable("IOLink__MASTERIP");
+        var ioLinkPort = configuration["IOLink:Port"] ?? Environment.GetEnvironmentVariable("IOÖINK__PORT");
+
+        if (ioLinkPort is not null)
+        {
+            _ioLinkPort = byte.Parse(ioLinkPort);
+        }
+        else
+        {
+            throw new Exception("IOLink port is required");
+        }
+
 
         _options = new MqttClientOptionsBuilder()
             .WithClientId(settings.ClientId)
-            .WithTcpServer(settings.BrokerHost, settings.BrokerPort)
+            .WithTcpServer(brokerHost, brokerPort)
             .WithCredentials(username, password)
             .WithCleanSession()
             .Build();
 
-        var masterConnection = IfmIoTCoreMasterConnectionFactory.Create("http://192.168.0.113");
+        var masterConnection = IfmIoTCoreMasterConnectionFactory.Create($"http://{masterIp}");
         _portReader = PortReaderBuilder
             .NewPortReader()
             .WithMasterConnection(masterConnection)
             .WithConverterDefaults()
             .WithPublicIODDFinderApi()
             .Build();
+
+        AnsiConsole.MarkupLine("[green]Configured IOLink MasterConnection and MQTT Client Options[/]"); 
+        PrintConfiguration(brokerHost, brokerPort, username, password, masterIp, _ioLinkPort, settings.ClientId);
+
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await _client.ConnectAsync(_options, stoppingToken);
-        await _portReader.InitializeForPortAsync(1);
+        AnsiConsole.MarkupLine("[yellow]# Execute MQTT Cycle[/]");
+
+        if (!_client.IsConnected)
+        {
+            try
+            {
+                await _client.ConnectAsync(_options, stoppingToken);
+                AnsiConsole.MarkupLine("[bold green]Successfully connected to MQTT Broker![/]");
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.MarkupLine("[bold red]Failed to connect to MQTT Broker:[/] " + ex.Message);
+                return;
+            }
+        }
+
+        await _portReader.InitializeForPortAsync(_ioLinkPort);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -59,8 +96,8 @@ public class IoLinkMqttService : BackgroundService
             var payload = new
             {
                 data = processData,
-                deviceId = "TODO Read Device ID", //_portReader.Device.ProfileBody.DeviceIdentity.DeviceId,
-                vendorId = "TODO Read Vendor ID" //_portReader.Device.ProfileBody.DeviceIdentity.VendorId
+                deviceId = _portReader.Device.ProfileBody.DeviceIdentity.DeviceId,
+                vendorId = _portReader.Device.ProfileBody.DeviceIdentity.VendorId
                 ,
             };
             var jsonPayload = JsonSerializer.Serialize(
@@ -75,6 +112,9 @@ public class IoLinkMqttService : BackgroundService
                 .Build();
 
             await _client.PublishAsync(mqttMessage, stoppingToken);
+
+            AnsiConsole.MarkupLine($"[bold green]MQTT Message was published:[/] {jsonPayload}");
+
             await Task.Delay(_publishInterval, stoppingToken);
         }
     }
@@ -83,5 +123,33 @@ public class IoLinkMqttService : BackgroundService
     {
         await _client.DisconnectAsync(cancellationToken: cancellationToken);
         await base.StopAsync(cancellationToken);
+    }
+    private void PrintWelcomeBanner()
+    {
+        var welcomeText = "AIO MQTT Sample";
+        var asciiBanner = Figgle.FiggleFonts.SlantSmall.Render(welcomeText);
+
+        AnsiConsole.MarkupLine("[bold green]Welcome to[/] [underline yellow]IoT Operations - IOLink MQTT Publish Sample[/]");
+        AnsiConsole.Write(new Markup($"[bold green]{asciiBanner}[/]"));
+    }
+
+    private void PrintConfiguration(string brokerHost, int brokerPort, string username, string password, string masterIp, byte ioLinkPort, string clientId)
+    {
+        var table = new Table();
+
+        table.AddColumn("Einstellung");
+        table.AddColumn("Wert");
+
+        table.AddRow("Broker Host", brokerHost);
+        table.AddRow("Broker Port", brokerPort.ToString());
+        table.AddRow("Username", username);
+        table.AddRow("Password", new('*', password.Length));
+        table.AddRow("IOLink Master IP", masterIp);
+        table.AddRow("IOLink Port", ioLinkPort.ToString());
+        table.AddRow("Client ID", clientId);
+        table.AddRow("Publish Interval (Sekunden)", _publishInterval.TotalSeconds.ToString());
+
+        AnsiConsole.MarkupLine("[bold yellow]Konfigurationseinstellungen:[/]");
+        AnsiConsole.Write(table);
     }
 }

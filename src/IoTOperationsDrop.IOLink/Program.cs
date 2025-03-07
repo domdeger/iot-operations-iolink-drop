@@ -1,4 +1,4 @@
-﻿using IoTOperationsDrop.IOLink.MQTT;
+﻿using IoTOperationsDrop.IOLink.Models.Settings;
 using IoTOperationsDrop.IOLink.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +17,7 @@ builder.ConfigureServices(
     {
         services.AddOptions();
         services.Configure<MqttSettings>(hostingContext.Configuration.GetSection("Mqtt"));
+        services.Configure<IoLinkSettings>(hostingContext.Configuration.GetSection("IOLink"));
         services.AddHostedService<IoLinkMqttService>();
     }
 );
