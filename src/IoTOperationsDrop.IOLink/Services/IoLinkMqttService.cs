@@ -113,7 +113,7 @@ public class IoLinkMqttService : BackgroundService
 
             await _client.PublishAsync(mqttMessage, stoppingToken);
 
-            AnsiConsole.MarkupLine($"[bold green]MQTT Message was published:[/] {jsonPayload}");
+            AnsiConsole.MarkupLine($"[bold green]MQTT Message was published in Topic {topic}:[/] {jsonPayload}");
 
             await Task.Delay(_publishInterval, stoppingToken);
         }

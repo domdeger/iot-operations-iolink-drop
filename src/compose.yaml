@@ -4,15 +4,23 @@
     build:
       context: ./
       dockerfile: IoTOperationsDrop.IOLink/Dockerfile
-    networks:
-      - iotoperationsdrop
+    environment:
+      IOLink__MasterIP: "192.168.2.194"
+      IOLink__Port: "1"
+      Mqtt__ClientId: "IOLink-Demo-MQTT-Client"
+      Mqtt__BrokerHost: "localhost"
+      Mqtt__BrokerPort: "1883"
+      Mqtt__Username: "user1"
+      Mqtt__Password: "supersecret"
+      Mqtt__PublishIntervalSeconds: "60"
+    network_mode: host
 
   mqttbroker:
     image: eclipse-mosquitto:2.0.21
     ports:
       - "1883:1883"
-    networks:
-      - iotoperationsdrop
-
-networks:
-  iotoperationsdrop:
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    network_mode: host
