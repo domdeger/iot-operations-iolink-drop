@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iotoperations-deployment
+  labels:
+    app: iotoperations
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iotoperations
+  template:
+    metadata:
+      labels:
+        app: iotoperations
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: iotoperations-container
+          image: timkubernetes.azurecr.io/iotoperations.iolink.mqtt:0.1
+          env:
+            - name: IOLink__MasterIP
+              value: "192.168.2.194"
+            - name: IOLink__Port
+              value: "1"
+            - name: Mqtt__ClientId
+              value: "IOLink-Demo-MQTT-Client"
+            - name: Mqtt__BrokerHost
+              value: "localhost"
+            - name: Mqtt__BrokerPort
+              value: "1883"
+            - name: Mqtt__Username
+              value: "user1"
+            - name: Mqtt__Password
+              value: "supersecret"
+            - name: Mqtt__PublishIntervalSeconds
+              value: "60"
