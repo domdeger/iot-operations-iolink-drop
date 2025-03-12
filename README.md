@@ -117,7 +117,7 @@ graph LR
 
 5. Erstellen Sie einen neuen Load Balancer Listener für den AIO MQTT Broker (mit dem im vorherigen Schritt erstellten Server-Zertifikat) auf Port 8883 mit ***X509-Authentifizierung***: [Secure MQTT broker communication by using BrokerListener - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/howto-configure-brokerlistener?tabs=portal%2Ctest)-->
 
-An diesem Punkt ist der AIO MQTT Broker einsatzbereit
+At this point, the AIO MQTT Broker is ready for use
 
 ## Prepare deployment and deploy to Azure IoT Operations Cluster
 
