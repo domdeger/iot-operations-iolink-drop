@@ -368,8 +368,8 @@ Dieses Projekt steht unter der MIT-Lizenz. Siehe [LICENSE](LICENSE) für weitere
 
 ## Autor
 
-**Tim** – [GitHub Profil](https://github.com/tim1993)
-**Dominik** – [GitHub Profil](https://github.com/domdeger)
+**Tim Steiner** – [GitHub Profil](https://github.com/tim1993)
+**Dominik Deschner** – [GitHub Profil](https://github.com/domdeger)
 
 ---
 

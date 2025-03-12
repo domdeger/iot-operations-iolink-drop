@@ -331,8 +331,8 @@ docker compose logs -f iotoperationsdrop.iolink
 This project is licensed under the MIT license. See [LICENSE](LICENSE) for more details.
 
 ## Author
-**Tim** - [GitHub profile](https://github.com/tim1993)
-**Dominik** - [GitHub profile](https://github.com/domdeger)
+**Tim Steiner** - [GitHub profile](https://github.com/tim1993)  
+**Dominik Deschner** - [GitHub profile](https://github.com/domdeger)
 
 ---
 **Note:** This is an example repository for the integration of IO-Link and MQTT with .NET.
