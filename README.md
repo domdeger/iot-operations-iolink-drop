@@ -116,13 +116,13 @@ For easy of use we create a new internal broker listener for ClusterIp without a
    <img src="images/mqtt-broker-clusterip_setup2.png" title="" alt="mqtt broker listener configuration">
    </p>
 
-    **!!!ATTENTION!!!** Do not use this setup without TLS and Authentication for production ready environments! For secure connections follow the next two steps!
-
-5. In order to secure the MQTT bridge between the IO-Link Sample App and AIO MQTT Broker, prepare **server and client certificates** to be installed on the AIO MQTT broker and IIoT Gateway by following: [Tutorial: Azure IoT Operations MQTT broker TLS, X.509 client authentication, and ABAC - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/tutorial-tls-x509)
-
-6. Create a new AIO MQTT Broker Load Balancer listener (with the server certificate created in the previous step) on **port 8883** with **X509-auth**: [Secure MQTT broker communication by using BrokerListener - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/howto-configure-brokerlistener?tabs=portal%2Ctest)
-
-At this point, the AIO MQTT Broker is ready for use
+    **!!!ATTENTION!!!** Do not use this setup without TLS and Authentication for production ready environments! For secure connections follow the next two steps!  
+  
+5. In order to secure the MQTT bridge between the IO-Link Sample App and AIO MQTT Broker, prepare **server and client certificates** to be installed on the AIO MQTT broker and IIoT Gateway by following: [Tutorial: Azure IoT Operations MQTT broker TLS, X.509 client authentication, and ABAC - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/tutorial-tls-x509)  
+  
+6. Create a new AIO MQTT Broker Load Balancer listener (with the server certificate created in the previous step) on **port 8883** with **X509-auth**: [Secure MQTT broker communication by using BrokerListener - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/howto-configure-brokerlistener?tabs=portal%2Ctest)  
+  
+At this point, the AIO MQTT Broker is ready for use  
 
 ## Prepare deployment and deploy to Azure IoT Operations Cluster
 
@@ -239,11 +239,14 @@ spec:
 ```
 
 **!!!ATTENTION!!!** Be sure to adjust the environment variables**  
+  
 Replace `IOLink__MasterIP.value` with the IP address of your IO-Link master in the network  
+  
 Replace `IOLink__Port.value` with the port to which your IO-Link device is connected to the master  
+  
 Replace `Mqtt__BrokerHost.value` according to your configuration (aio-broker-service references to the service name of your MQTT Broker listener details)  
+  
 Replace `Mqtt__PublishIntervalSeconds` with the time interval in seconds in which your messages should be placed on the MQTT broker
-
 
 #### 5.5 Check whether the deployment was successful
 Retrieve pods in the namespace iolink:
