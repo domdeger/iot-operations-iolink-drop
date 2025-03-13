@@ -7,18 +7,9 @@ Dieses Repository dient als Beispiel, wie man **IOLink.NET** an den integrierten
 </p>
 
 ## Architekturdiagramm
-
-```mermaid
-graph LR
-  TS[Temperatursensor]
-  IO[IO-Link Master]
-  AIO[Azure IoT Operations MQTT Broker]
-  AAK[Azure Arc Kubernetes Cluster]
-
-  TS --> IO
-  IO -- "MQTT" --> AIO
-  AIO -- "teil von" --> AAK
-```
+<p align="center">
+  <img src="images/architecture.png" title="" alt="IOLink Sample App - IoT Operations - Architecture">
+</p>
 
 ## Features
 
@@ -55,15 +46,15 @@ graph LR
 
    Parameter:
 
-   ```powershell
-   $STORAGE_ACCOUNT=<Storage-Account-Name>
-   $LOCATION=<Azure Location>
-   $RESOURCE_GROUP=<Resource-Group-Name>
-   $SCHEMA_REGISTRY=<SchemaRegistry-Name>
-   $SCHEMA_REGISTRY_NAMESPACE=<SchemaRegistry-Namespace>
-   $CLUSTER_NAME=<ClusterName>
-   $SUBSCRIPTION_ID=<Azure Subscription-ID>
-   $ACR_NAME=<Container-Registry-Name>
+   ```sh
+   STORAGE_ACCOUNT=<Storage-Account-Name>
+   LOCATION=<Azure Location>
+   RESOURCE_GROUP=<Resource-Group-Name>
+   SCHEMA_REGISTRY=<SchemaRegistry-Name>
+   SCHEMA_REGISTRY_NAMESPACE=<SchemaRegistry-Namespace>
+   CLUSTER_NAME=<ClusterName>
+   SUBSCRIPTION_ID=<Azure Subscription-ID>
+   ACR_NAME=<Container-Registry-Name>
    ```
 
    Extensions einmalig auf dem Cluster aktivieren
@@ -122,9 +113,22 @@ graph LR
    <img src="images/kubernetescluster_check.png" title="" alt="az iot ops check result">
    </p>
 
-<!--4. OPTIONAL - Um die MQTT-Bridge zwischen dem IIoT Gateway und dem AIO MQTT Broker abzusichern, bereiten Sie Server- und Client-Zertifikate vor, die auf dem AIO MQTT Broker und dem IIoT Gateway installiert werden sollen. Weitere Informationen finden Sie im folgenden Tutorial: [Tutorial: Azure IoT Operations MQTT broker TLS, X.509 client authentication, and ABAC - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/tutorial-tls-x509)
+4. Einrichtung des MQTT-Brokers  
+Navigieren Sie zu Ihrer Azure IoT Operations Cluster Instanz und löschen Sie den Standard MQTT Broker.
+Um die Nutzung zu vereinfachen, erstellen wir einen neuen internen Broker-Listener für ClusterIp ohne Authentifizierung und ohne TLS.
 
-5. Erstellen Sie einen neuen Load Balancer Listener für den AIO MQTT Broker (mit dem im vorherigen Schritt erstellten Server-Zertifikat) auf Port 8883 mit ***X509-Authentifizierung***: [Secure MQTT broker communication by using BrokerListener - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/howto-configure-brokerlistener?tabs=portal%2Ctest)-->
+   <p align="center">
+   <img src="images/mqtt-broker-clusterip_setup1.png" title="" alt="mqtt broker listener">
+   </p>
+   <p align="center">
+   <img src="images/mqtt-broker-clusterip_setup2.png" title="" alt="mqtt broker listener configuration">
+   </p>
+
+    &#128161; Verwenden Sie dieses Setup nicht ohne TLS und Authentifizierung für Produktionsumgebungen! Für sichere Verbindungen folgen Sie den nächsten beiden Schritten!
+
+5. Um die MQTT-Verbindung zwischen der IO-Link Sample App und dem AIO MQTT Broker zu sichern, bereiten Sie **Server- und Client-Zertifikate** vor, die auf dem AIO MQTT Broker und in der IO-Link Sample App hinterlegt werden müssen: [Tutorial: Azure IoT Operations MQTT broker TLS, X.509 client authentication, and ABAC - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/tutorial-tls-x509)
+
+6. Erstellen Sie einen neuen AIO MQTT Broker Load Balancer Listener (mit dem im vorherigen Schritt erstellten Serverzertifikat) auf **Port 8883** mit **X509-auth**: [Secure MQTT broker communication by using BrokerListener - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/howto-configure-brokerlistener?tabs=portal%2Ctest)
 
 An diesem Punkt ist der AIO MQTT Broker einsatzbereit
 
@@ -182,10 +186,10 @@ Die Antwort sieht exemplarisch wie folgt aus und wird beim anlegen des Secrets w
 
 Folgende Parameter sollten für die weiteren Schritte gesetzt werden:
 
-```powershell
-$SERVICE_PRINCIPAL_APPID=appId
-$SERVICE_PRINCIPAL_PASSWORD=password
-$DOCKER_MAIL=mymailadress
+```sh
+SERVICE_PRINCIPAL_APPID=appId
+SERVICE_PRINCIPAL_PASSWORD=password
+DOCKER_MAIL=mymailadress
 ```
 
 Wenn die IO-Link anbindung in einem eigenen Kubernetes Namespace, sodass die Anwendung isoliert läuft, erstellt werden soll muss dieser angelegt werden
@@ -238,15 +242,15 @@ spec:
           image: myregistry.azurecr.io/iot/iotoperationsdrop.iolink:latest
           env:
             - name: IOLink__MasterIP
-              value: '192.168.2.194'
+              value: "192.168.2.194"
             - name: IOLink__Port
               value: '1'
             - name: Mqtt__ClientId
               value: 'IOLink-Demo-MQTT-Client'
             - name: Mqtt__BrokerHost
-              value: '192.168.2.140'
+              value: 'aio-broker-service.azure-iot-operations.svc.cluster.local'
             - name: Mqtt__BrokerPort
-              value: '30003'
+              value: '18883'
             - name: Mqtt__Username
               value: ''
             - name: Mqtt__Password
@@ -258,7 +262,7 @@ spec:
 **&#128161;Achte darauf die Umgebungsvariablen anzupassen**  
 Ersetze `IOLink__MasterIP.value` mit der IP-Adresse deines IO-Link Masters im Netzwerk  
 Ersetze `IOLink__Port.value` mit dem Port an den dein IO-Link Gerät am Master angeschlossen ist  
-Ersetze `Mqtt__BrokerHost.value` mit der IP-Adresse deines Kubernetes Clusters  
+Ersetzen Sie `Mqtt__BrokerHost.value` entsprechend Ihrer Konfiguration (aio-broker-service verweist auf den Dienstnamen Ihres MQTT Broker Listeners)    
 Ersetze `Mqtt__PublishIntervalSeconds` mit dem Zeitintervall in Sekunden in denen deine Nachrichten auf den MQTT Broker gelegt werden sollen
 
 #### 5.5 Prüfen ob das Deployment erfolgreich war
@@ -333,13 +337,13 @@ Passe die Datei `appsettings.json` an, um den **IO-Link Master** und den **MQTT 
 
 Vorlage:
 
-```powershell
-$IOLink__MasterIP=192.168.2.140
-$IOLink__Port=1
-$Mqtt__ClientId="IOLink-Demo-MQTT-Client"
-$Mqtt__BrokerHost="your-broker-address"
-$Mqtt__BrokerPort=1883
-$Mqtt__PublishIntervalSeconds=60
+```sh
+IOLink__MasterIP=192.168.2.140
+IOLink__Port=1
+Mqtt__ClientId="IOLink-Demo-MQTT-Client"
+Mqtt__BrokerHost="your-broker-address"
+Mqtt__BrokerPort=1883
+Mqtt__PublishIntervalSeconds=60
 ```
 
 #### 3. Container erstellen und starten

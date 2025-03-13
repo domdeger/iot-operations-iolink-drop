@@ -7,17 +7,9 @@ This repository serves as an example of how to connect **IOLink.NET** to the int
 </p>
 
 ## Architecture diagram
-```mermaid
-graph LR
-  TS[Temperatursensor]
-  IO[IO-Link Master]
-  AIO[Azure IoT Operations MQTT Broker]
-  AAK[Azure Arc Kubernetes Cluster]
-
-  TS --> IO
-  IO -- "MQTT" --> AIO
-  AIO -- "teil von" --> AAK
-```
+<p align="center">
+  <img src="images/architecture.png" title="" alt="IOLink Sample App - IoT Operations - Architecture">
+</p>
 
 ## Features
 - Connection to an IO-Link master via **IOLink.NET**
@@ -51,25 +43,25 @@ graph LR
    If you don't have an Arc-enabled Kubernetes cluster yet, you can read [here](https://iotim.de/kubernetes-cluster-mit-azure-arc-verbinden-mein-erfahrungsbericht/) how to set one up.
 
    Parameters: 
-   ```powershell 
-   $STORAGE_ACCOUNT=<Storage-Account-Name>  
-   $LOCATION=<Azure Location>  
-   $RESOURCE_GROUP=<resource group name>  
-   $SCHEMA_REGISTRY=<SchemaRegistry-Name>  
-   $SCHEMA_REGISTRY_NAMESPACE=<SchemaRegistry-Namespace>  
-   $CLUSTER_NAME=<ClusterName>  
-   $SUBSCRIPTION_ID=<Azure Subscription ID>  
-   $ACR_NAME=<Container Registry Name>
+   ```sh 
+   STORAGE_ACCOUNT=<Storage-Account-Name>  
+   LOCATION=<Azure Location>  
+   RESOURCE_GROUP=<resource group name>  
+   SCHEMA_REGISTRY=<SchemaRegistry-Name>  
+   SCHEMA_REGISTRY_NAMESPACE=<SchemaRegistry-Namespace>  
+   CLUSTER_NAME=<ClusterName>  
+   SUBSCRIPTION_ID=<Azure Subscription ID>  
+   ACR_NAME=<Container Registry Name>
    ```
 
    Activate extensions once on the cluster
    ```sh
-   az provider register -n “Microsoft.ExtendedLocation”
-   az provider register -n “Microsoft.Kubernetes”
-   az provider register -n “Microsoft.KubernetesConfiguration”
-   az provider register -n “Microsoft.IoTOperations”
-   az provider register -n “Microsoft.DeviceRegistry”
-   az provider register -n “Microsoft.SecretSyncController”
+   az provider register -n "Microsoft.ExtendedLocation"
+   az provider register -n "Microsoft.Kubernetes"
+   az provider register -n "Microsoft.KubernetesConfiguration"
+   az provider register -n "Microsoft.IoTOperations"
+   az provider register -n "Microsoft.DeviceRegistry"
+   az provider register -n "Microsoft.SecretSyncController"
    ```
 
    Create storage account:
@@ -113,9 +105,22 @@ graph LR
    <img src="images/kubernetescluster_check.png" title="" alt="az iot ops check result">
    </p>
 
-<!--4. OPTIONAL - Um die MQTT-Bridge zwischen dem IIoT Gateway und dem AIO MQTT Broker abzusichern, bereiten Sie Server- und Client-Zertifikate vor, die auf dem AIO MQTT Broker und dem IIoT Gateway installiert werden sollen. Weitere Informationen finden Sie im folgenden Tutorial: [Tutorial: Azure IoT Operations MQTT broker TLS, X.509 client authentication, and ABAC - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/tutorial-tls-x509)
+4. Setup of MQTT Broker  
+Navigate to your Azure IoT Operations Cluster Instance and delete the default MQTT broker.
+For easy of use we create a new internal broker listener for ClusterIp without authentication and without TLS.
 
-5. Erstellen Sie einen neuen Load Balancer Listener für den AIO MQTT Broker (mit dem im vorherigen Schritt erstellten Server-Zertifikat) auf Port 8883 mit ***X509-Authentifizierung***: [Secure MQTT broker communication by using BrokerListener - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/howto-configure-brokerlistener?tabs=portal%2Ctest)-->
+   <p align="center">
+   <img src="images/mqtt-broker-clusterip_setup1.png" title="" alt="mqtt broker listener">
+   </p>
+   <p align="center">
+   <img src="images/mqtt-broker-clusterip_setup2.png" title="" alt="mqtt broker listener configuration">
+   </p>
+
+    &#128161; Do not use this setup without TLS and Authentication for production ready environments! For secure connections follow the next two steps!
+
+5. In order to secure the MQTT bridge between the IO-Link Sample App and AIO MQTT Broker, prepare **server and client certificates** to be installed on the AIO MQTT broker and IIoT Gateway by following: [Tutorial: Azure IoT Operations MQTT broker TLS, X.509 client authentication, and ABAC - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/tutorial-tls-x509)
+
+6. Create a new AIO MQTT Broker Load Balancer listener (with the server certificate created in the previous step) on **port 8883** with **X509-auth**: [Secure MQTT broker communication by using BrokerListener - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/howto-configure-brokerlistener?tabs=portal%2Ctest)
 
 At this point, the AIO MQTT Broker is ready for use
 
@@ -163,10 +168,10 @@ The response looks as follows as an example and is required again when the secre
 ```
 
 The following parameters should be set for the next steps:
-```powershell
-$SERVICE_PRINCIPAL_APPID=appId
-$SERVICE_PRINCIPAL_PASSWORD=password
-$DOCKER_MAIL=mymailadress
+```sh
+SERVICE_PRINCIPAL_APPID=appId
+SERVICE_PRINCIPAL_PASSWORD=password
+DOCKER_MAIL=mymailadress
 ```
 
 If the IO-Link connection is to be created in a separate Kubernetes namespace so that the application runs in isolation, this must be created
@@ -216,27 +221,27 @@ spec:
           image: myregistry.azurecr.io/iot/iotoperationsdrop.iolink:latest
           env:
             - name: IOLink__MasterIP
-              value: “192.168.2.194”
+              value: "192.168.2.194"
             - name: IOLink__Port
-              value: “1”
+              value: "1"
             - name: Mqtt__ClientId
-              value: “IOLink-Demo-MQTT-Client”
+              value: "IOLink-Demo-MQTT-Client"
             - name: Mqtt__BrokerHost
-              value: “192.168.2.140”
+              value: "aio-broker-service.azure-iot-operations.svc.cluster.local"
             - name: Mqtt__BrokerPort
-              value: “30003”
+              value: "18883"
             - name: Mqtt__Username
-              value: “”
+              value: ""
             - name: Mqtt__Password
-              value: “”
+              value: ""
             - name: Mqtt__PublishIntervalSeconds
-              value: “60”
+              value: "60"
 ```
 
 **&#128161;Be sure to adjust the environment variables**  
 Replace `IOLink__MasterIP.value` with the IP address of your IO-Link master in the network  
 Replace `IOLink__Port.value` with the port to which your IO-Link device is connected to the master  
-Replace `Mqtt__BrokerHost.value` with the IP address of your Kubernetes cluster  
+Replace `Mqtt__BrokerHost.value` according to your configuration (aio-broker-service references to the service name of your MQTT Broker listener details)  
 Replace `Mqtt__PublishIntervalSeconds` with the time interval in seconds in which your messages should be placed on the MQTT broker
 
 
@@ -259,7 +264,7 @@ The program periodically sends the IO-Link sensor data to the MQTT topic used in
 
 ```
 topic: iolink/pdin
-payload: {“data”:{“TI_PD_SV_3_Name”:false,“TI_PD_SV_2_Name”:false,“TI_PD_VR_1_Name”:243},“deviceId”:733,“vendorId”:310}
+payload: {"data":{"TI_PD_SV_3_Name":false,"TI_PD_SV_2_Name":false,"TI_PD_VR_1_Name":243},"deviceId":733,"vendorId":310}
 ```
 <p align="center">
   <img src="images/mqttx-client-message-validation.png" title="" alt="Validate MQTT message retrieval">
@@ -285,28 +290,28 @@ Customize the file `appsettings.json` to configure the **IO-Link Master** and th
 
 ```json
 {
-  “IOLink": {
-    “MasterIP": ‘192.168.1.100’,
-    “Port": 1
+  "IOLink": {
+    "MasterIP": "192.168.1.100",
+    "Port": 1
   },
-  “Mqtt": {
-    “ClientId": ‘IOLink-Demo-MQTT-Client’,
-    “BrokerHost": ‘your-broker-address’,
-    “BrokerPort": 1883,
-    “PublishIntervalSeconds": 60
+  "Mqtt": {
+    "ClientId": "IOLink-Demo-MQTT-Client",
+    "BrokerHost": "your-broker-address",
+    "BrokerPort": 1883,
+    "PublishIntervalSeconds": 60
   }
 }
 ```
 &#128161; Alternatively, the configuration values can be overwritten by environment variables according to the following scheme Section__Value. Example: IOLink__MasterIP
 
 Template:
-```powershell
-$IOLink__MasterIP=192.168.2.140
-$IOLink__Port=1
-$Mqtt__ClientId="IOLink-Demo-MQTT-Client”
-$Mqtt__BrokerHost="your-broker-address”
-$Mqtt__BrokerPort=1883
-$Mqtt__PublishIntervalSeconds=60
+```sh
+IOLink__MasterIP=192.168.2.140
+IOLink__Port=1
+Mqtt__ClientId="IOLink-Demo-MQTT-Client"
+Mqtt__BrokerHost="your-broker-address"
+Mqtt__BrokerPort=1883
+Mqtt__PublishIntervalSeconds=60
 ```
 
 #### 3. Create and start container
