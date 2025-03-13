@@ -19,7 +19,7 @@ This repository serves as an example of how to connect **IOLink.NET** to the int
 
 ## Requirements
 - [.NET 8+](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-- Docker](https://www.docker.com/products/docker-desktop/)  
+- [Docker](https://www.docker.com/products/docker-desktop/)  
   - *To create the image*
   - *(Optional) run the container locally*
 - An [Azure Arc-enabled Kubernetes cluster](https://learn.microsoft.com/azure/azure-arc/kubernetes/overview) (such as [K3s](https://k3s.io/)).  
@@ -40,7 +40,7 @@ This repository serves as an example of how to connect **IOLink.NET** to the int
 
 2. deployment in the Kubernetes cluster (example: for my single-node cluster).
 
-   If you don't have an Arc-enabled Kubernetes cluster yet, you can read [here](https://iotim.de/kubernetes-cluster-mit-azure-arc-verbinden-mein-erfahrungsbericht/) how to set one up.
+   If you do not have an Arc-enabled Kubernetes cluster yet, you can read [here](https://iotim.de/kubernetes-cluster-mit-azure-arc-verbinden-mein-erfahrungsbericht/) how to set one up.
 
    Parameters: 
    ```sh 
@@ -116,7 +116,7 @@ For easy of use we create a new internal broker listener for ClusterIp without a
    <img src="images/mqtt-broker-clusterip_setup2.png" title="" alt="mqtt broker listener configuration">
    </p>
 
-    &#128161; Do not use this setup without TLS and Authentication for production ready environments! For secure connections follow the next two steps!
+    **!!!ATTENTION!!!** Do not use this setup without TLS and Authentication for production ready environments! For secure connections follow the next two steps!
 
 5. In order to secure the MQTT bridge between the IO-Link Sample App and AIO MQTT Broker, prepare **server and client certificates** to be installed on the AIO MQTT broker and IIoT Gateway by following: [Tutorial: Azure IoT Operations MQTT broker TLS, X.509 client authentication, and ABAC - Azure IoT Operations | Microsoft Learn](https://learn.microsoft.com/azure/iot-operations/manage-mqtt-broker/tutorial-tls-x509)
 
@@ -238,7 +238,7 @@ spec:
               value: "60"
 ```
 
-**&#128161;Be sure to adjust the environment variables**  
+**!!!ATTENTION!!!** Be sure to adjust the environment variables**  
 Replace `IOLink__MasterIP.value` with the IP address of your IO-Link master in the network  
 Replace `IOLink__Port.value` with the port to which your IO-Link device is connected to the master  
 Replace `Mqtt__BrokerHost.value` according to your configuration (aio-broker-service references to the service name of your MQTT Broker listener details)  
