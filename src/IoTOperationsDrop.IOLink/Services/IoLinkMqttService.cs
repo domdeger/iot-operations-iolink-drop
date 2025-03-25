@@ -47,12 +47,17 @@ public class IoLinkMqttService : BackgroundService
         }
 
 
-        _options = new MqttClientOptionsBuilder()
+        var mqttOptions = new MqttClientOptionsBuilder()
             .WithClientId(settings.ClientId)
             .WithTcpServer(brokerHost, brokerPort)
-            .WithCredentials(username, password)
-            .WithCleanSession()
-            .Build();
+            .WithCleanSession();
+
+        if(username is not null && password is not null)
+        {
+            mqttOptions.WithCredentials(username, password);
+        }
+
+        _options = mqttOptions.Build();
 
         var masterConnection = IfmIoTCoreMasterConnectionFactory.Create($"http://{masterIp}");
         _portReader = PortReaderBuilder
@@ -69,53 +74,59 @@ public class IoLinkMqttService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        AnsiConsole.MarkupLine("[yellow]# Execute MQTT Cycle[/]");
-
-        if (!_client.IsConnected)
+        try
         {
-            try
-            {
-                await _client.ConnectAsync(_options, stoppingToken);
-                AnsiConsole.MarkupLine("[bold green]Successfully connected to MQTT Broker![/]");
-            }
-            catch (Exception ex)
-            {
-                AnsiConsole.MarkupLine("[bold red]Failed to connect to MQTT Broker:[/] " + ex.Message);
-                return;
-            }
-        }
+            AnsiConsole.MarkupLine("[yellow]# Execute MQTT Cycle[/]");
 
-        await _portReader.InitializeForPortAsync(_ioLinkPort);
+            if (!_client.IsConnected)
+            {
+                try
+                {
+                    await _client.ConnectAsync(_options, stoppingToken);
+                    AnsiConsole.MarkupLine("[bold green]Successfully connected to MQTT Broker![/]");
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.MarkupLine("[bold red]Failed to connect to MQTT Broker:[/] " + ex.Message);
+                    return;
+                }
+            }
 
-        while (!stoppingToken.IsCancellationRequested)
+            await _portReader.InitializeForPortAsync(_ioLinkPort);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var processData = await _portReader.ReadConvertedProcessDataInAsync();
+
+                const string topic = "iolink/pdin";
+
+                var payload = new
+                {
+                    data = processData,
+                    deviceId = _portReader.Device.ProfileBody.DeviceIdentity.DeviceId,
+                    vendorId = _portReader.Device.ProfileBody.DeviceIdentity.VendorId
+                    ,
+                };
+                var jsonPayload = JsonSerializer.Serialize(
+                    payload,
+                    DefaultJsonSerializerSettings.Settings
+                );
+
+                var mqttMessage = new MqttApplicationMessageBuilder()
+                    .WithTopic(topic)
+                    .WithPayload(jsonPayload)
+                    .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtLeastOnce)
+                    .Build();
+
+                await _client.PublishAsync(mqttMessage, stoppingToken);
+
+                AnsiConsole.MarkupLine($"[bold green]MQTT Message was published in Topic {topic}:[/] {jsonPayload}");
+
+                await Task.Delay(_publishInterval, stoppingToken);
+            }
+        } catch(Exception ex)
         {
-            var processData = await _portReader.ReadConvertedProcessDataInAsync();
-
-            const string topic = "iolink/pdin";
-
-            var payload = new
-            {
-                data = processData,
-                deviceId = _portReader.Device.ProfileBody.DeviceIdentity.DeviceId,
-                vendorId = _portReader.Device.ProfileBody.DeviceIdentity.VendorId
-                ,
-            };
-            var jsonPayload = JsonSerializer.Serialize(
-                payload,
-                DefaultJsonSerializerSettings.Settings
-            );
-
-            var mqttMessage = new MqttApplicationMessageBuilder()
-                .WithTopic(topic)
-                .WithPayload(jsonPayload)
-                .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.ExactlyOnce)
-                .Build();
-
-            await _client.PublishAsync(mqttMessage, stoppingToken);
-
-            AnsiConsole.MarkupLine($"[bold green]MQTT Message was published in Topic {topic}:[/] {jsonPayload}");
-
-            await Task.Delay(_publishInterval, stoppingToken);
+            AnsiConsole.Markup($"[red]Fehler:[/] {ex.Message}");
         }
     }
 
@@ -124,6 +135,7 @@ public class IoLinkMqttService : BackgroundService
         await _client.DisconnectAsync(cancellationToken: cancellationToken);
         await base.StopAsync(cancellationToken);
     }
+
     private void PrintWelcomeBanner()
     {
         var welcomeText = "AIO MQTT Sample";
@@ -133,7 +145,7 @@ public class IoLinkMqttService : BackgroundService
         AnsiConsole.Write(new Markup($"[bold green]{asciiBanner}[/]"));
     }
 
-    private void PrintConfiguration(string brokerHost, int brokerPort, string username, string password, string masterIp, byte ioLinkPort, string clientId)
+    private void PrintConfiguration(string brokerHost, int brokerPort, string? username, string? password, string masterIp, byte ioLinkPort, string clientId)
     {
         var table = new Table();
 
@@ -142,8 +154,8 @@ public class IoLinkMqttService : BackgroundService
 
         table.AddRow("Broker Host", brokerHost);
         table.AddRow("Broker Port", brokerPort.ToString());
-        table.AddRow("Username", username);
-        table.AddRow("Password", new('*', password.Length));
+        table.AddRow("Username", username ?? "<empty>");
+        table.AddRow("Password", password != null ? new('*', password.Length): "<empty>" );
         table.AddRow("IOLink Master IP", masterIp);
         table.AddRow("IOLink Port", ioLinkPort.ToString());
         table.AddRow("Client ID", clientId);

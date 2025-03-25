@@ -1,0 +1,38 @@
+{
+  "Title": "Azure IoT Operations Sample - IOLink.NET via MQTT",
+  "Summary": "This sample demonstrates the integration of IO-Link devices using IOLink.NET to connect with the integrated Azure IoT Operations MQTT Broker.",
+  "Description": "This code sample shows how to integrate IO-Link sensor data with an Azure IoT Operations MQTT Broker. The application uses IOLink.NET to connect to an IO-Link Master and read sensor data with the IOLinkPortReader. The data is then published periodically as MQTT messages. Containerization with Docker ensures easy deployment and scalability. Requirements include .NET 8+, Docker, an MQTT broker, and an IO-Link Master with connected sensors. Configuration is managed via the appsettings.json file and can be overridden by environment variables.",
+  "Cover": "https://via.placeholder.com/600x400.png?text=IoT+Operations+Sample",
+  "Authors": [
+    {
+      "Name": "Tim Steiner",
+      "Link": "https://github.com/tim1993"
+    },
+    {
+      "Name": "Dominik Deschner",
+      "Link": "https://github.com/domdeger"
+    }
+  ],
+  "Source": "https://github.com/domdeger/iot-operations-iolink-drop",
+  "Type": "tutorial_guide",
+  "Difficulty": "Medium",
+  "ProgrammingLanguage": [
+    "C#",
+    "Dockerfile",
+    "JSON"
+  ],
+  "Products": [
+    "Azure Arc",
+    "Arc-enabled Kubernetes",
+    "Azure IoT Operations"
+  ],
+  "LastModified": "2025-03-13T13:50:00.000Z",
+  "CreatedDate": "2025-03-13T13:50:00.000Z",
+  "Topics": [
+    "IoT",
+    "IO-Link",
+    "MQTT",
+    ".NET",
+    "Azure IoT Operations"
+  ]
+}
